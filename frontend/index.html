@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام النتائج الإلكترونية - بوابة الدخول الموحدة</title>
+  <!-- استدعاء ملفات التنسيق -->
+  <link rel="stylesheet" href="css/style.css?v=1.2">
+</head>
+<body class="auth-container">
+
+  <!-- أشكال النيون الخلفية الجذابة -->
+  <div class="neon-circle one"></div>
+  <div class="neon-circle two"></div>
+
+  <!-- بطاقة تسجيل الدخول الزجاجية -->
+  <main class="auth-card">
+    <header class="auth-header">
+      <div style="display: inline-block; padding: 12px; background: rgba(59,130,246,0.15); border-radius: 16px; margin-bottom: 15px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+          <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/>
+        </svg>
+      </div>
+      <h1>بوابة الطالب والجامعة الموحدة</h1>
+      <p>Electronic Student Results System</p>
+    </header>
+
+    <!-- نموذج تسجيل الدخول -->
+    <form id="login-form">
+      <div class="form-group">
+        <label for="username">اسم المستخدم / الرقم الأكاديمي</label>
+        <div class="input-wrapper">
+          <input type="text" id="username" placeholder="مثال: admin أو ali2026" required autocomplete="username">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">كلمة المرور</label>
+        <div class="input-wrapper">
+          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" style="margin-top: 10px;">
+        تسجيل الدخول الآمن
+      </button>
+    </form>
+
+    <footer style="margin-top: 25px; font-size: 0.8rem; color: #94a3b8;">
+      <p>© 2026 جميع الحقوق محفوظة - مشروع التخرج الجامعي</p>
+    </footer>
+  </main>
+
+  <!-- استدعاء ملف منطق النظام -->
+  <script src="js/app.js"></script>
+  <script>
+    // 1. التحقق الفوري: إذا كان مسجل دخول بالفعل، يوجهه للوحة التحكم المناسبة
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuth();
+    });
+
+    // 2. معالجة إرسال النموذج لتسجيل الدخول
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const usernameInput = document.getElementById('username').value.trim();
+      const passwordInput = document.getElementById('password').value;
+
+      if (!usernameInput || !passwordInput) {
+        showToast('يرجى ملء جميع الحقول المطلوبة.', 'warning');
+        return;
+      }
+
+      // إظهار حركة التحميل (تأثير بصري رائع)
+      const btn = e.target.querySelector('button');
+      const originalText = btn.innerText;
+      btn.innerText = 'جاري التحقق والدخول...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: usernameInput,
+            password: passwordInput
+          })
+        });
+
+        const data = await response.json();
+
+        if (data && data.success) {
+          showToast(data.message || 'تم تسجيل الدخول بنجاح!', 'success');
+          
+          // حفظ التوكن وبيانات المستخدم في localStorage
+          localStorage.setItem('jwt_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+
+          // التوجيه التلقائي خلال ثانية واحدة لإعطاء شعور بالنعومة وسرعة الأداء
+          setTimeout(() => {
+            redirectToDashboard(data.user.role);
+          }, 800);
+        } else {
+          showToast(data.message || 'اسم المستخدم أو كلمة المرور غير صحيحة.', 'danger');
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      } catch (error) {
+        console.error('Login submit error:', error);
+        showToast('فشل في الاتصال بالسيرفر. تأكد من تشغيل الـ Server.', 'danger');
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم المحاضر - نظام النتائج الإلكترونية</title>
+  <link rel="stylesheet" href="css/style.css?v=1.2">
+  <style>
+    /* تنسيقات إضافية لسرعة الرصد المباشر */
+    .inline-grade-input {
+      width: 80px;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: var(--transition);
+      background-color: #fff;
+    }
+    .inline-grade-input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      background-color: #f8fafc;
+    }
+    .btn-grade-save {
+      background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+    }
+    .btn-grade-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    
+    <!-- 1. شريط جانبي للتنقل (Sidebar) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon">L</div>
+        <div class="logo-text">
+          بوابة المحاضر
+          <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 400;">نظام النتائج الإلكتروني</div>
+        </div>
+      </div>
+
+      <nav style="flex-grow: 1;">
+        <ul class="sidebar-menu">
+          <li class="sidebar-item active" data-target="grading-tab">
+            <a>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              رصد الدرجات
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="logout()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          تسجيل الخروج
+        </button>
+      </div>
+    </aside>
+
+    <!-- 2. المحتوى الرئيسي (Main Content) -->
+    <main class="main-content">
+      
+      <!-- هيدر علوي مخصص للملف الشخصي -->
+      <header class="top-header">
+        <div class="welcome-section">
+          <h2>مرحباً بك يا دكتور</h2>
+          <p>رصد درجات الطلاب وتعديلها بسهولة للمواد الأكاديمية المسندة إليك.</p>
+        </div>
+        <div class="user-profile-badge">
+          <div class="avatar" id="header-user-avatar">DR</div>
+          <div class="user-info">
+            <div class="user-name" id="header-user-name">د. أحمد علي</div>
+            <div class="user-role" id="header-user-role">عضو هيئة التدريس</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- علامة تبويب رصد الدرجات -->
+      <section id="grading-tab" class="content-section active">
+        
+        <!-- بطاقة اختيار المادة -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">اختر المادة الدراسية للبدء في الرصد</h3>
+          </div>
+          <div style="max-width: 400px;">
+            <div class="form-group">
+              <label for="lecturer-course-select">المواد المسندة إليك حالياً</label>
+              <div class="input-wrapper">
+                <select id="lecturer-course-select" onchange="onCourseSelected()" required>
+                  <option value="">-- اختر مادة دراسية --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- بطاقة عرض كشف الدرجات للرصد المباشر -->
+        <div class="section-card" id="students-grading-card" style="display: none;">
+          <div class="section-header">
+            <div>
+              <h3 class="section-title" id="selected-course-title">اسم المادة المحددة</h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;" id="selected-course-info">رمز المادة: - | عدد الساعات: -</p>
+            </div>
+            <span class="badge badge-pending" id="enrolled-students-count">0 طلاب مسجلين</span>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>الرقم</th>
+                  <th>اسم الطالب</th>
+                  <th>الرقم الأكاديمي</th>
+                  <th>الدرجة المدخلة (من 100)</th>
+                  <th>التقدير المحسوب</th>
+                  <th>حفظ الرصد</th>
+                </tr>
+              </thead>
+              <tbody id="grading-table-body">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">يرجى اختيار مادة لعرض الطلاب.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    // 1. تأمين الصفحة للأدوار المسموحة (Lecturer)
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuth(['lecturer']);
+      loadLecturerCourses();
+    });
+
+    // 2. جلب المواد المسندة لهذا المحاضر لتعبئة القائمة
+    async function loadLecturerCourses() {
+      const response = await apiFetch('/api/lecturer/courses');
+      const select = document.getElementById('lecturer-course-select');
+      
+      if (response && response.success) {
+        if (response.courses.length === 0) {
+          select.innerHTML = '<option value="">⚠️ لا توجد مواد مسندة إليك حالياً</option>';
+          showToast('تنبيه: لم يقم مسؤول النظام بإسناد أي مادة لك بعد.', 'warning');
+          return;
+        }
+
+        // تعبئة القائمة بالمواد المسندة
+        select.innerHTML = '<option value="">-- اختر مادة دراسية للرصد --</option>';
+        response.courses.forEach(c => {
+          select.innerHTML += `<option value="${c.id}" data-name="${c.course_name}" data-code="${c.course_code}" data-credits="${c.credits}">${c.course_name} (${c.course_code})</option>`;
+        });
+      }
+    }
+
+    // 3. عند اختيار مادة من القائمة
+    async function onCourseSelected() {
+      const select = document.getElementById('lecturer-course-select');
+      const courseId = select.value;
+
+      const gradingCard = document.getElementById('students-grading-card');
+
+      if (!courseId) {
+        gradingCard.style.display = 'none';
+        return;
+      }
+
+      // الحصول على تفاصيل المادة من خيارات القائمة
+      const selectedOption = select.options[select.selectedIndex];
+      const courseName = selectedOption.getAttribute('data-name');
+      const courseCode = selectedOption.getAttribute('data-code');
+      const courseCredits = selectedOption.getAttribute('data-credits');
+
+      // تحديث واجهة الرأس
+      document.getElementById('selected-course-title').innerText = courseName;
+      document.getElementById('selected-course-info').innerText = `رمز المادة: ${courseCode} | عدد الساعات المعتمدة: ${courseCredits} ساعات`;
+
+      // جلب الطلاب المسجلين بالدرجات
+      await loadEnrolledStudents(courseId);
+      gradingCard.style.display = 'block';
+    }
+
+    // 4. جلب درجات الطلاب المسجلين في مادة
+    async function loadEnrolledStudents(courseId) {
+      const response = await apiFetch(`/api/lecturer/courses/${courseId}/students`);
+      const tableBody = document.getElementById('grading-table-body');
+      const countBadge = document.getElementById('enrolled-students-count');
+
+      if (response && response.success) {
+        countBadge.innerText = `${response.students.length} طالب مسجل`;
+
+        if (response.students.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">لا يوجد طلاب مسجلين في هذه المادة حالياً. يرجى الطلب من الإدارة تسجيلهم.</td></tr>`;
+          return;
+        }
+
+        tableBody.innerHTML = response.students.map((student, idx) => {
+          const currentMarks = student.marks !== null ? student.marks : '';
+          const currentGrade = student.grade !== null ? student.grade : '—';
+          
+          let badgeClass = 'badge-pending';
+          if (student.grade) {
+            badgeClass = `badge-${student.grade.charAt(0).toLowerCase()}`;
+          }
+
+          return `
+            <tr>
+              <td>${idx + 1}</td>
+              <td style="font-weight: 600;">${student.name}</td>
+              <td><code>${student.reg_no}</code></td>
+              <td>
+                <input type="number" 
+                       id="marks-input-${student.student_id}" 
+                       class="inline-grade-input" 
+                       placeholder="رصد" 
+                       min="0" 
+                       max="100" 
+                       step="0.01" 
+                       value="${currentMarks}">
+              </td>
+              <td>
+                <span id="grade-badge-${student.student_id}" class="badge ${badgeClass}">${currentGrade}</span>
+              </td>
+              <td>
+                <button class="btn-icon btn-grade-save" onclick="saveStudentGrade(${student.student_id}, ${courseId})" title="حفظ الدرجة">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // 5. حفظ وحساب التقدير بشكل مباشر وتفاعلي (Inline API calls)
+    async function saveStudentGrade(studentId, courseId) {
+      const input = document.getElementById(`marks-input-${studentId}`);
+      const marksValue = input.value.trim();
+
+      if (marksValue === '') {
+        showToast('الرجاء إدخال درجة صالحة للطالب.', 'warning');
+        return;
+      }
+
+      const marks = parseFloat(marksValue);
+      if (isNaN(marks) || marks < 0 || marks > 100) {
+        showToast('يجب أن تكون الدرجة قيمة رقمية بين 0 و 100.', 'danger');
+        return;
+      }
+
+      // إظهار تأثير حركي خفيف على زر الحفظ
+      const btn = document.querySelector(`button[onclick="saveStudentGrade(${studentId}, ${courseId})"]`);
+      btn.style.opacity = '0.5';
+      btn.disabled = true;
+
+      const data = await apiFetch('/api/lecturer/grade', {
+        method: 'POST',
+        body: JSON.stringify({
+          student_id: studentId,
+          course_id: courseId,
+          marks: marks
+        })
+      });
+
+      btn.style.opacity = '1';
+      btn.disabled = false;
+
+      if (data && data.success) {
+        showToast(data.message, 'success');
+        
+        // إعادة تحميل درجات الطلاب لتحديث شارة التقدير المحسوبة تلقائياً من السيرفر
+        await loadEnrolledStudents(courseId);
+      } else if (data) {
+        showToast(data.message, 'danger');
+      }
+    }
+  </script>
+</body>
+</html>
